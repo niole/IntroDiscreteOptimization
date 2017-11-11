@@ -46,7 +46,6 @@ currentIndex - currently selected item
 chosen - a list of indexes determining what has been selected
 """
 def solver(items, obj_func, K, V, currentBest, currentIndex, chosen):
-#    print("obj_func: %s, K: %s, V: %s, current best: %s, current Index: %s, chosen: %s" % (obj_func, K, V, currentBest.chosen, currentIndex, chosen))
     if K < 0:
         return
     elif K == 0 or currentIndex == len(items):
@@ -70,31 +69,6 @@ def solver(items, obj_func, K, V, currentBest, currentIndex, chosen):
 
         elif obj_func < currentBest.best_guess and k < currentBest.value:
             return currentBest
-#def solver(items, obj_func, K, V, currentBest, currentIndex, chosen):
-##    print("obj_func: %s, K: %s, V: %s, current best: %s, current Index: %s, chosen: %s" % (obj_func, K, V, currentBest.chosen, currentIndex, chosen))
-#    if K < 0:
-#        return
-#    elif K == 0 or currentIndex == len(items):
-#        return currentBest
-#    elif K > 0 and currentIndex < len(items):
-#        k = K - items[currentIndex].weight
-#        v = V + items[currentIndex].value
-#
-#        if v >= currentBest.value or obj_func >= currentBest.best_guess:
-#
-#            rightChosen = chosen + ["1"]
-#            nextBest = get_better(Best(k, v, obj_func, rightChosen), currentBest)
-#            best = solver(items, obj_func, k, v, nextBest, currentIndex+1, rightChosen)
-#
-#            leftChosen = chosen + ["0"]
-#            obj_func_without = get_objective_func(get_available_items(items, leftChosen), K)
-#
-#            if best:
-#                return solver(items, obj_func_without, K, V, best, currentIndex+1, leftChosen)
-#            return solver(items, obj_func_without, K, V, currentBest, currentIndex+1, leftChosen)
-#
-#        elif obj_func < currentBest.best_guess and k < currentBest.value:
-#            return currentBest
 
 def format_chosen(items, chosen):
     return " ".join(chosen)
