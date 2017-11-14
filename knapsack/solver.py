@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from collections import namedtuple
+from subprocess import Popen, PIPE
 from dpsolver import dpsolver
 from branchnboundsolver import branchboundsolver
 
@@ -11,21 +12,25 @@ def solve_it(input_data):
     # Modify this code to run your optimization algorithm
 
     # parse the input
-    lines = input_data.split('\n')
+   # lines = input_data.split('\n')
 
-    firstLine = lines[0].split()
-    item_count = int(firstLine[0])
-    capacity = int(firstLine[1])
+   # firstLine = lines[0].split()
+   # item_count = int(firstLine[0])
+   # capacity = int(firstLine[1])
 
-    items = []
+   # items = []
 
-    for i in range(1, item_count+1):
-        line = lines[i]
-        parts = line.split()
-        items.append(Item(i-1, int(parts[0]), int(parts[1])))
+#  for i in range(1, item_count+1):
+#      line = lines[i]
+#      parts = line.split()
+#      items.append(Item(i-1, int(parts[0]), int(parts[1])))
+    process = Popen(['./branchnboundsolverhaskell', input_data], stdout=PIPE)
+
+    (stdout, stderr) = process.communicate()
+    return stdout.strip()
 
     #return dpsolver(items, capacity)
-    return branchboundsolver(items, capacity)
+#    return branchboundsolver(items, capacity)
 
 if __name__ == '__main__':
     import sys
