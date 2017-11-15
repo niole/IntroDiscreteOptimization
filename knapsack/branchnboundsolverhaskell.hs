@@ -68,7 +68,7 @@ sortByWeightDensity capacity is = snd <$> (sortBy sortDensity $ createWeights <$
 
 formatOutput :: Best -> [Item] -> String
 formatOutput best items = let cs = sortBy sortIndex $ chosen best
-                          in (show $ v best) ++ " 1\n" ++ (unwords $ augment cs 0)
+                          in unwords $ augment cs 0
                           where sortIndex a b
                                   | index a < index b = LT
                                   | otherwise = GT
@@ -76,7 +76,6 @@ formatOutput best items = let cs = sortBy sortIndex $ chosen best
                                 augment (c:chosen) i
                                         | i == (index c) = "1":augment chosen (i+1)
                                         | otherwise = "0":augment (c:chosen) (i+1) -- assume i <
-
 
 main :: IO()
 main = do
@@ -86,7 +85,9 @@ main = do
            k = capacity arg
            is = sortByWeightDensity k $ items arg
            oF = getObjectiveFunc is k
-       putStrLn $ show $ formatOutput (solver is oF k 0 (Best k 0 oF []) []) $ items arg
+           best = solver is oF k 0 (Best k 0 oF []) []
+       putStrLn $ (show $ round $ v best) ++ " 1"
+       putStrLn $ show $ formatOutput best $ items arg
 
 --data KnapsackProblem = KnapsackProblem { capacity :: Int, items :: [Item] }
 --data Item = Item { weight :: Int, value :: Int }
