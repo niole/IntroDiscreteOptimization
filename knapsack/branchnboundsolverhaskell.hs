@@ -68,14 +68,14 @@ sortByWeightDensity capacity is = snd <$> (sortBy sortDensity $ createWeights <$
 
 formatOutput :: Best -> [Item] -> String
 formatOutput best items = let cs = sortBy sortIndex $ chosen best
-                          in unwords $ augment cs 0
+                          in unwords $ augment cs items
                           where sortIndex a b
                                   | index a < index b = LT
                                   | otherwise = GT
-                                augment [] i = (\_ -> "0") <$> items
-                                augment (c:chosen) i
-                                        | i == (index c) = "1":augment chosen (i+1)
-                                        | otherwise = "0":augment (c:chosen) (i+1) -- assume i <
+                                augment [] items = (\_ -> "0") <$> items
+                                augment (c:chosen) (item:items)
+                                        | (index item) == (index c) = "1":augment chosen items
+                                        | otherwise = "0":augment (c:chosen) items
 
 main :: IO()
 main = do
