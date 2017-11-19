@@ -8,6 +8,38 @@ data Args = Args { items :: [Item], capacity :: Double }
         deriving (Show)
 data Best = Best { k :: Double, v :: Double, bestGuess :: Double, chosen :: [Item] }
         deriving (Show, Eq)
+data KnapsackState = KnapsackState { currItems :: [Item], objFunc :: Double, currCapacity :: Double,  currValue :: Double, best :: Best, selected :: [Item] }
+
+class BranchNBoundSolver a where
+  isSuboptimalRoute :: a -> Bool
+  done :: a -> Bool
+  getObjectiveFunction :: a -> Double
+  considerItem :: a -> a
+  ignoreItem :: a -> Best -> a
+
+instance BranchNBoundSolver KnapsackState where
+  isSuboptimalRoute s = objFunc s <= (v $ best s) || currCapacity s < 0
+  done = f
+         where f (KnapsackState [] _ _ _ _ _) = True
+               f (KnapsackState _ _ capacity _ _ _) = capacity == 0
+  considerItem (KnapsackState (i:is) oF currCapacity currValue best selected) = KnapsackState is oF (currCapacity - (weight i)) (currValue + (value i)) (max best $ Best currCapacity currValue oF selected) (i:selected)
+  getObjectiveFunction ks = let (_:is) = currItems ks
+                                chosen = selected ks
+                                k = currCapacity ks
+                            in fitElements (getAvailableItems is chosen) k $ fromIntegral 0
+                                where getAvailableItems is chosen = foldl rev is chosen
+                                                                        where rev cs c = c:cs
+                                      fitElements (x:xs) k objFunc
+                                        | k == 0 = objFunc
+                                        | k > 0 && k - (weight x) >= 0 = fitElements xs (k - (weight x)) $ objFunc+ (value x)
+                                        | k > 0 && k - (weight x) < 0 = fitElements xs 0 (objFunc + (value x) * (k / (weight x)))
+                                      fitElements [] _ objFunc = objFunc
+
+  ignoreItem ks bestWhenKept = let k = currCapacity ks
+                                   v = currValue ks
+                                   chosen = selected ks
+                                   (_:is) = currItems ks
+                               in KnapsackState is (getObjectiveFunction ks) k v bestWhenKept chosen
 
 instance Ord Best where
   compare a b = compare (v a) $ v b
@@ -28,22 +60,12 @@ getAvailableItems is chosen = foldl rev is chosen
 -- if recalculated objective function and estimate are both less than the current best, stop
 -- calculate objective function with items that have already been chosen and those that have not yet been seen
 -- that is the possible max value
-solver :: [Item] -> Double -> Double -> Double -> Best -> [Item] -> Best
-solver [] objFunc currCapacity currValue best chosen
-        | currCapacity < 0 = best
-        | objFunc <= (v best) = best
-        | currCapacity >= 0 = max best $ Best currCapacity currValue objFunc chosen
-
-solver (item:items) objFunc currCapacity currValue best chosen
-        | currCapacity < 0 = best
-        | objFunc <= (v best) = best
-        | currCapacity == 0 = max best $ Best currCapacity currValue objFunc chosen
-        | otherwise = let currBest = max best $ Best currCapacity currValue objFunc chosen
-                          chosenWith = item:chosen
-                          chosenWithout = chosen
-                          bestWhenKept = solver items objFunc (currCapacity - (weight item)) (currValue + (value item)) currBest chosenWith
-                          bestOverall = solver items (getObjectiveFunc (getAvailableItems items chosenWithout) currCapacity) currCapacity currValue bestWhenKept chosenWithout
-                      in bestOverall
+solver :: KnapsackState -> Best
+solver ks
+  | isSuboptimalRoute ks = best ks
+  | done ks = max (best ks) $ Best (currCapacity ks) (currValue ks) (objFunc ks) (selected ks)
+  | otherwise = let bestWhenKept = solver $ considerItem ks
+              in solver $ ignoreItem ks bestWhenKept
 
 splitData :: String -> [String]
 splitData as = words =<< lines as
@@ -85,42 +107,6 @@ main = do
            k = capacity arg
            is = sortByWeightDensity k $ items arg
            oF = getObjectiveFunc is k
-           best = solver is oF k 0 (Best k 0 oF []) []
+           best = solver $ KnapsackState is oF k 0 (Best k 0 oF []) []
        putStrLn $ (show $ round $ v best) ++ " 1"
        putStrLn $ show $ formatOutput best $ items arg
-
---data KnapsackProblem = KnapsackProblem { capacity :: Int, items :: [Item] }
---data Item = Item { weight :: Int, value :: Int }
---parseProblem :: String -> KnapsackProblem
---
---getObjectiveFunc :: [Item] -> Double -> Double
---
---getObjective :: SolverState -> Double
---getObjective ss = (getObjectiveFunc (remainingItems ss) (toDouble $ remainingCapacity ss))
---
---
---data SolverState = SolverState {
---  choices :: [Choice],
---  value :: Int,
---  remainingItems :: [Item],
---  remainingCapacity :: Int,
---  best :: [Choice]
---}
---
---solve :: KnapsackProblem -> SolverState
---solve kp = solve' $
---  SolverState {
---    choices=[],
---    value=0,
---    remainingItems=(items kp),
---    remainingCapacity=(capacity kp)
---  }
---
---data Choice = Choice { chosen :: Boolean, item :: Item }
---
---
---solve' :: SolverState -> SolverState
---solve' (SolverState choices value remainingItems remainingCapacity)
---        | remainingCapacity == 0 = -- base case: nextStates returns -- generate next two states using nextStates
----- recursively call solve on these two subproblems
----- need to thread the best argument through
