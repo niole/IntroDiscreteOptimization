@@ -10,14 +10,14 @@ data Best = Best { k :: Double, v :: Double, bestGuess :: Double, chosen :: [Ite
         deriving (Show, Eq)
 data KnapsackState = KnapsackState { currItems :: [Item], objFunc :: Double, currCapacity :: Double,  currValue :: Double, best :: Best, selected :: [Item] }
 
-class BranchNBoundSolver a where
+class KnapsackSolver a where
   isSuboptimalRoute :: a -> Bool
   done :: a -> Bool
   getObjectiveFunction :: a -> Double
   considerItem :: a -> a
   ignoreItem :: a -> Best -> a
 
-instance BranchNBoundSolver KnapsackState where
+instance KnapsackSolver KnapsackState where
   isSuboptimalRoute s = objFunc s <= (v $ best s) || currCapacity s < 0
   done = f
          where f (KnapsackState [] _ _ _ _ _) = True
